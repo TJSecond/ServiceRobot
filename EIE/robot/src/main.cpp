@@ -1,9 +1,30 @@
 #include <Arduino.h>
 #include <TaskScheduler.h>
-
+#include<stdio.h>
+#include<stdlib.h>
+#include<algorithm> 
+#include<string.h>
+#include<iostream>
+#include<queue>
+#include<math.h>
+#include<string>
+#include<map>
+#include<functional>
+#include<unordered_map>
+#include<bitset>
+#include <soc/soc.h> 
+#include <soc/rtc_cntl_reg.h>
+#include <soc/rtc_wdt.h> //设置看门狗用
+#include <Wire.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiAP.h>
+#include <BluetoothSerial.h>
+#include <ESP32Servo.h>
 
 Scheduler scheduler;
 
+#define inf 0x3f3f3f3f
 #define monitor_speed 115200
 
 Task task1(1000, TASK_FOREVER, [](){
