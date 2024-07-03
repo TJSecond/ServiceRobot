@@ -15,7 +15,9 @@
 
 #define EEPROM_SIZE 64
 
-#define INTERRUPT_PIN 16
+#define INTERRUPT_PIN   16
+
+
 
 
 /* Servos --------------------------------------------------------------------*/
@@ -23,6 +25,7 @@
 Servo servo[4][3];
 //define servos' ports
 const int servo_pin[4][3] = {{18,  5,  19}, {  2,  4, 15}, {33, 25,  32}, {14,  27, 13}};
+//const int offset[4][3] =    {{30,  -90, 25 }, { 0,  75,  50}, { -30,  30,  55}, { 25,  10, 0}};
 const int offset[4][3] =    {{0,  -90, -25 }, { 20,  75,  85}, { 0,  35,  45}, { 0,  0, 25}};
 /* Size of the robot ---------------------------------------------------------*/
 const float length_a = 55;
@@ -86,8 +89,8 @@ int act = 1;
 char val;
 
 String header;
-const char *ssid = "QuadBot-T-22"; //热点名称，自定义
-const char *password = "1234567822";//连接密码，自定义
+const char *ssid = "QuadBot-T"; //热点名称，自定义
+const char *password = "12345678";//连接密码，自定义
 void Task1code( void *pvParameters );
 void Task2code( void *pvParameters );
 //wifi在core0，其他在core1；1为大核
@@ -151,6 +154,12 @@ void setup()
   servo_attach();
   Serial.println("Servos initialized");
   Serial.println("Robot initialization Complete");
+
+  IPAddress customIP(192, 168, 8, 1); // 自定义的 IP 地址
+  IPAddress subnet(255, 255, 255, 252);  // 子网掩码
+
+
+  WiFi.softAPConfig(customIP, customIP, subnet);
 
   WiFi.softAP(ssid, password);//不写password，即热点开放不加密
   IPAddress myIP = WiFi.softAPIP();//此为默认IP地址192.168.4.1，也可在括号中自行填入自定义IP地址
@@ -435,18 +444,42 @@ bool Auto_blance (void)
 }
 
 
-
-void capturePicture()
+void capture_picture()
 {
+  Serial.println("capture picture");
+  WiFiClient client;
+  if (!client.connect("192.168.8.2", 8080)) {
+    Serial.println("Connection to server failed!");
+    return;
+  }
 
+  // Construct the HTTP request
+  String request = "GET /capture HTTP/1.1\r\n";
+  request += "Host: 192.168.8.2\r\n";
+  request += "Connection: close\r\n";
+  request += "\r\n";
+
+  // Send the HTTP request
+  client.print(request);
+
+  // Check server response
+  while (client.connected()) {
+    String line = client.readStringUntil('\n');
+    if (line == "\r") {
+      break;
+    }
+  }
+
+  // Close the connection
+  client.stop();
 }
+
+
 
 bool Avoid(void)
 {
-
   while (1)
   {
-    
     vTaskDelay(10);
     WiFiClient client = server.available();  //监听连入设备
     pinMode(trig_echo, OUTPUT);                      //设置Trig_RX_SCL_I/O为输出
@@ -496,9 +529,9 @@ bool Avoid(void)
     }
     delay(30);                                       //单次测离完成后加30mS的延时再进行下次测量。防止近距离测量时，测量到上次余波，导致测量不准确。
 
-    if (distance <= 40)
+    if (distance <= 20)
     {
-      capturePicture();
+      capture_picture();
       stand();
       turn_left(5);
     }
